@@ -1,0 +1,3 @@
+# Find your public IP: curl https://api.ipify.org
+# Add /32 at the end to make it CIDR format
+admin_ip_cidr = "YOUR_IP_HERE/32"
