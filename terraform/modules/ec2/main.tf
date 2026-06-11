@@ -52,13 +52,13 @@ resource "aws_security_group" "ec2" {
   }
 
   # Application NestJS (pour tests directs)
-  ingress {
-    description = "NestJS app from anywhere (testing)"
-    from_port   = 3000
-    to_port     = 3000
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+#   ingress {
+#     description = "NestJS app from anywhere (testing)"
+#     from_port   = 3000
+#     to_port     = 3000
+#     protocol    = "tcp"
+#     cidr_blocks = ["0.0.0.0/0"]
+#   }
 
   # Tout le trafic sortant autorisé
   egress {
@@ -130,6 +130,99 @@ locals {
 }
 
 # ==========================================
+# IAM Role pour l'EC2
+# Permet à l'EC2 de récupérer les secrets sans credentials
+# ==========================================
+resource "aws_iam_role" "ec2" {
+  name = "${var.project_name}-${var.environment}-ec2-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Action = "sts:AssumeRole"
+      Effect = "Allow"
+      Principal = {
+        Service = "ec2.amazonaws.com"
+      }
+    }]
+  })
+
+  tags = merge(var.common_tags, {
+    Name = "${var.project_name}-${var.environment}-ec2-role"
+  })
+}
+
+# Policy : lire les secrets dans Secrets Manager
+resource "aws_iam_role_policy" "ec2_secrets" {
+  name = "${var.project_name}-${var.environment}-ec2-secrets"
+  role = aws_iam_role.ec2.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Action = [
+        "secretsmanager:GetSecretValue",
+        "secretsmanager:DescribeSecret"
+      ]
+      Resource = "arn:aws:secretsmanager:*:*:secret:${var.project_name}/${var.environment}/*"
+    }]
+  })
+}
+
+# Policy : lire les paramètres SSM (pour les configs non-secrètes)
+resource "aws_iam_role_policy" "ec2_ssm" {
+  name = "${var.project_name}-${var.environment}-ec2-ssm"
+  role = aws_iam_role.ec2.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Action = [
+        "ssm:GetParameter",
+        "ssm:GetParameters",
+        "ssm:GetParametersByPath"
+      ]
+      Resource = "arn:aws:ssm:*:*:parameter/${var.project_name}/${var.environment}/*"
+    }]
+  })
+}
+
+# Instance Profile (ce qu'on attache à l'EC2)
+resource "aws_iam_instance_profile" "ec2" {
+  name = "${var.project_name}-${var.environment}-ec2-profile"
+  role = aws_iam_role.ec2.name
+
+  tags = merge(var.common_tags, {
+    Name = "${var.project_name}-${var.environment}-ec2-profile"
+  })
+}
+
+# Policy : CloudWatch Logs
+resource "aws_iam_role_policy" "ec2_cloudwatch" {
+  name = "${var.project_name}-${var.environment}-ec2-cloudwatch"
+  role = aws_iam_role.ec2.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Action = [
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents",
+        "logs:DescribeLogStreams",
+        "logs:DescribeLogGroups",
+        "cloudwatch:PutMetricData",
+        "ec2:DescribeTags"
+      ]
+      Resource = "*"
+    }]
+  })
+}
+
+# ==========================================
 # Instance EC2 (t2.micro = Free Tier)
 # ==========================================
 resource "aws_instance" "backend" {
@@ -139,7 +232,7 @@ resource "aws_instance" "backend" {
   subnet_id              = var.public_subnet_id
   vpc_security_group_ids = [aws_security_group.ec2.id]
   key_name               = aws_key_pair.main.key_name
-  
+  iam_instance_profile = aws_iam_instance_profile.ec2.name
   user_data                   = local.user_data
   user_data_replace_on_change = false  # Ne pas recréer l'instance si user_data change
   

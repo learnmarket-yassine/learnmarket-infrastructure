@@ -53,7 +53,7 @@ variable "allocated_storage" {
 variable "backup_retention_period" {
   type        = number
   description = "Days to retain backups"
-  default     = 1
+  default     = 0
 }
 
 variable "skip_final_snapshot" {

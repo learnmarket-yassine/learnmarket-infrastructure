@@ -37,7 +37,7 @@ provider "aws" {
       Project     = "learnmarket"
       Environment = "dev"
       ManagedBy   = "terraform"
-      Owner       = "amine"
+      Owner       = "yassine"
     }
   }
 }
