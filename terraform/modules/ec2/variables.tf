@@ -39,3 +39,8 @@ variable "common_tags" {
   type        = map(string)
   default     = {}
 }
+variable "github_actions_ssh_public_key" {
+  type        = string
+  description = "Public SSH key for GitHub Actions deployment"
+  default     = ""
+}
