@@ -19,7 +19,7 @@ terraform {
   # IMPORTANT : remplace BUCKET_NAME par celui généré par bootstrap.sh
   backend "s3" {
     bucket         = "learnmarket-terraform-state-1781102476"
-    key            = "dev/terraform.tfstate"
+    key            = "prod/terraform.tfstate"
     region         = "eu-west-3"
     encrypt        = true
     dynamodb_table = "learnmarket-terraform-locks"
@@ -35,7 +35,7 @@ provider "aws" {
   default_tags {
     tags = {
       Project     = "learnmarket"
-      Environment = "dev"
+      Environment = "prod"
       ManagedBy   = "terraform"
       Owner       = "yassine"
     }
@@ -107,35 +107,35 @@ module "rds" {
 }
 
 # ============================================
-# FRONTEND DEV
+# FRONTEND PRODUCTION
 # ============================================
-module "frontend_dev" {
+module "frontend_prod" {
   source = "../../modules/frontend"
   
-  bucket_name  = "learnmarket-frontend-dev"
-  environment  = "dev"
+  bucket_name  = "learnmarket-frontend-prod"
+  environment  = "prod"
   project_name = "learnmarket"
   price_class  = "PriceClass_100"
   
   tags = {
-    Environment = "dev"
+    Environment = "prod"
     Project     = "learnmarket"
   }
 }
 
 # ============================================
-# IAM GITHUB ACTIONS (DEV)
+# IAM GITHUB ACTIONS (PROD)
 # ============================================
-module "iam_github_actions_dev" {
+module "iam_github_actions_prod" {
   source = "../../modules/iam-github-actions"
   
-  environment                 = "dev"
+  environment                 = "prod"
   project_name                = "learnmarket"
-  s3_bucket_arn               = module.frontend_dev.bucket_arn
-  cloudfront_distribution_arn = module.frontend_dev.distribution_arn
+  s3_bucket_arn               = module.frontend_prod.bucket_arn
+  cloudfront_distribution_arn = module.frontend_prod.distribution_arn
   
   tags = {
-    Environment = "dev"
+    Environment = "prod"
     Project     = "learnmarket"
   }
 }
