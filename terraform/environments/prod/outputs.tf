@@ -81,35 +81,35 @@ output "get_password_command" {
 }
 
 # ============================================
-# FRONTEND OUTPUTS (DEV)
+# FRONTEND OUTPUTS (PROD)
 # ============================================
 
 output "frontend_s3_bucket" {
   description = "Frontend S3 bucket name"
-  value       = module.frontend_dev.bucket_name
+  value       = module.frontend_prod.bucket_name
 }
 
 output "frontend_cloudfront_id" {
   description = "Frontend CloudFront distribution ID"
-  value       = module.frontend_dev.distribution_id
+  value       = module.frontend_prod.distribution_id
 }
 
 output "frontend_url" {
   description = "Frontend URL (CloudFront)"
-  value       = module.frontend_dev.website_url
+  value       = module.frontend_prod.website_url
 }
 
 # ============================================
-# GITHUB ACTIONS CREDENTIALS (DEV)
+# GITHUB ACTIONS CREDENTIALS (PROD)
 # ============================================
 
 output "github_actions_access_key_id" {
-  description = "AWS access key ID for GitHub Actions (DEV)"
-  value       = module.iam_github_actions_dev.access_key_id
+  description = "AWS access key ID for GitHub Actions (PROD)"
+  value       = module.iam_github_actions_prod.access_key_id
 }
 
 output "github_actions_secret_key" {
-  description = "AWS secret key for GitHub Actions (DEV) - SENSITIVE"
-  value       = module.iam_github_actions_dev.secret_access_key
+  description = "AWS secret key for GitHub Actions (PROD) - SENSITIVE"
+  value       = module.iam_github_actions_prod.secret_access_key
   sensitive   = true
 }
